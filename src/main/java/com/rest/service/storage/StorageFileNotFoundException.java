@@ -1,6 +1,5 @@
 package com.rest.service.storage;
 
-
 public class StorageFileNotFoundException extends StorageException {
 
 	/**

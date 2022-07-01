@@ -25,127 +25,106 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.rest.service.UserService;
 import com.rest.service.entitys.UserData;
-import com.rest.service.exception.UserNotFoundException;
 import com.rest.service.storage.StorageService;
 
 @RestController
-//@RequestMapping("/users")
+
 class UserController {
-	
+
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 
 	@Autowired
 	private final UserService service;
-	
+
 	@Autowired
 	StorageService storageService;
 
-	public UserController(UserService service,StorageService storageService) {
-	
-	this.service = service;
-	this.storageService= storageService;
+	public UserController(UserService service, StorageService storageService,
+			BCryptPasswordEncoder bCryptPasswordEncoder) {
+
+		this.service = service;
+		this.storageService = storageService;
+		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
 	}
-	
-	
+
 	@GetMapping("/")
 	public String home() {
-		return "hi";
+		return "welcome to profile builder api";
 	}
+
+	@GetMapping("/users")
+	CollectionModel<EntityModel<UserData>> all() {
+		List<UserData> userData=service.findAll();
+		for(UserData x: userData) {
+			x.setPassword("it's safe don't worry just enjoy it");
+		}
+		List<EntityModel<UserData>> users = userData.stream()
+				.map(user -> EntityModel.of(user,
+						linkTo(methodOn(UserController.class).one(user.getId())).withSelfRel(),
+						linkTo(methodOn(UserController.class).all()).withRel("users")))
+				.collect(Collectors.toList());
+
+		return CollectionModel.of(users, linkTo(methodOn(UserController.class).all()).withSelfRel());
+	}
+
 	
-	
-@GetMapping("/users")
-CollectionModel<EntityModel<UserData>> all() {
-	List<EntityModel<UserData>> users = service.findAll().stream()
-		      .map(user -> EntityModel.of(user,
-			          linkTo(methodOn(UserController.class).one(user.getId())).withSelfRel(),
-			          linkTo(methodOn(UserController.class).all()).withRel("users")))
-			      .collect(Collectors.toList());
 
-			  return CollectionModel.of(users, linkTo(methodOn(UserController.class).all()).withSelfRel());
-}
+	@PostMapping("/profile/reset/{id}")
+	ResponseEntity<?> resetPassword(@PathVariable("id") Long id, @RequestParam("password") String password) {
 
-//@PostMapping("/users")
-//UserData newEmployee(@RequestParam("file") MultipartFile file,@RequestBody UserData newUser) {
-//	newUser.setFilepath(storageService.store(file));
-//	newUser.setPassword(bCryptPasswordEncoder.encode(newUser.getPassword()));
-//	
-//  return service.save(newUser);
-//}
+		UserData user = service.findById(id);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		if ((user.getEmail()).equalsIgnoreCase(username)) {
+			user.setPassword(bCryptPasswordEncoder.encode(password));
+			service.save(user);
+			return ResponseEntity.ok("Password Changed sucessfully");
+		}
+		return ResponseEntity.badRequest().build();
+	}
 
-@PostMapping("/users")
-UserData newUser(@RequestParam("file") MultipartFile file,@RequestParam("name") String name,
-		@RequestParam("email") String email,@RequestParam("password") String password,@RequestParam("links") String[] links,
-		@RequestParam("projects") String[] projects,@RequestParam("skills") String[] skills) {
-	UserData newUser=new UserData();
-	newUser.setName(name);
-	newUser.setFilepath(storageService.store(file));
-	newUser.setEmail(email);
-	newUser.setLinks(links);
-	newUser.setProjects(projects);
-	newUser.setSkills(skills);
-	newUser.setPassword(bCryptPasswordEncoder.encode(password));
-	
-  return service.save(newUser);
-}
+	@GetMapping(value = "/photo", produces = MediaType.IMAGE_JPEG_VALUE)
+	void one(HttpServletResponse response) throws IOException {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		String s = service.findByUsername(username).getFilepath();
+		InputStream inputStream = new FileInputStream(s);
+		response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+		StreamUtils.copy(inputStream, response.getOutputStream());
+	}
 
+	@GetMapping("/profile/{id}")
+	EntityModel<UserData> one(@PathVariable Long id) {
 
-@GetMapping(value="/photo",produces =MediaType.IMAGE_JPEG_VALUE)
-void one(HttpServletResponse response) throws IOException {
-	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	 String username = authentication.getName();
-	String s= service.findByUsername(username);
-	InputStream  inputStream=new FileInputStream(s);
-	System.out.println(inputStream);
-	response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-	StreamUtils.copy(inputStream, response.getOutputStream());
-}
+		UserData userData = service.findById(id);
+		userData.setPassword("Don't worry it's safe");
 
-@GetMapping("/users/{id}")
-EntityModel<UserData> one(@PathVariable Long id) {
-  
-  UserData userData= service.findById(id);
+		return EntityModel.of(userData, //
+				linkTo(methodOn(UserController.class).one(id)).withSelfRel(),
+				linkTo(methodOn(UserController.class).all()).withRel("users"));
 
+	}
 
-return EntityModel.of(userData, //
-	      linkTo(methodOn(UserController.class).one(id)).withSelfRel(),
-	      linkTo(methodOn(UserController.class).all()).withRel("users"));
-	
-}
+	@DeleteMapping("/profile/{id}")
+	ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
 
-@DeleteMapping("/users/{id}")
-ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		Long tempId = service.findByUsername(username).getId();
+		if (id == tempId) {
+			service.deleteById(id);
+			return ResponseEntity.ok("Profile deleted Succussefully");
+		}
 
-	service.deleteById(id);
-
-  return ResponseEntity.noContent().build();
-}
-
-
-@PutMapping("/users/{id}")
-EntityModel<UserData> updateUsers(@RequestBody UserData user, @PathVariable Long id) {
-
-	UserData userData=service.findById(id); 
-	user.setId(id);
-    if(userData!=null) {
-       
-    	service.save(user);
-    }
-    else  new UserNotFoundException(id);
-
-
-  return EntityModel.of(userData, 
-	      linkTo(methodOn(UserController.class).one(id)).withSelfRel(),
-	      linkTo(methodOn(UserController.class).updateUsers(user,id)).withRel("users"));
-}
-
+		else
+			return ResponseEntity.badRequest().build();
+	}
 
 }
-

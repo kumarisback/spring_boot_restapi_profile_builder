@@ -12,12 +12,13 @@ public class MyUserPrincipal implements UserDetails {
 	/**
 	 * 
 	 */
-	
+
 	private UserData userData;
-	
-	
+
 	public MyUserPrincipal(UserData userData) {
+
 		this.userData = userData;
+
 	}
 
 	private static final long serialVersionUID = 1L;

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.rest.service.UserService;
 import com.rest.service.entitys.UserData;
 import com.rest.service.repositry.UserDataRepo;
 import com.rest.service.storage.StorageService;
@@ -17,24 +18,34 @@ public class PreRunner {
 	@Autowired
 	StorageService storageService;
 	
-	 private static final Logger log = LoggerFactory.getLogger(PreRunner.class);
+	@Autowired
+	UserService userService;
 
-	 @Autowired
-	 PasswordEncoder passwordEncoder;
-	  @Bean
-	  CommandLineRunner initDatabase(UserDataRepo repository) {
+	private static final Logger log = LoggerFactory.getLogger(PreRunner.class);
 
-		  
-	    return args -> {
-//	    	storageService.deleteAll();
-	    	storageService.init();
-	      log.info("Preloading " + repository.save(new UserData("Arun","arun@wipro.com",passwordEncoder.encode("pass"),new String[] {"c","java"},new String[] {"home","spring"},new String[] {"link1","link2"},"images/admin")));
-//	      log.info("Preloading " + repository.save(new UserData("avtar","avtar@wipro.com",passwordEncoder.encode("pass"),new String[] {"c++","python"},new String[] {"home","boot"},new String[] {"link3","link5"},null)));
-	    };
-	  }
-	public PreRunner(PasswordEncoder passwordEncoder,StorageService storageService) {
+	@Autowired
+	PasswordEncoder passwordEncoder;
+
+	@Bean
+	CommandLineRunner initDatabase(UserDataRepo repository) {
+
+		return args -> {
+			storageService.init();
+			
+			if(userService.findByUsername("arun@gmail.com")==null) { 
+			 repository.save(new UserData("Arun Kumar", "arun@gmail.com",
+					passwordEncoder.encode("hardtoguess"), "7009740089",
+					new String[] { "C", "C++", "Java", "Spring", "Spring Boot", "ReactJs", "MongoDb", "NodeJs" },
+					new String[] { "Hotel Managment", "DevConnect", "Cart", "Playlist Maker" }, new String[] {
+							"https://github.com/kumarisback", "https://in.linkedin.com/in/arun-kumar-49a155120" },
+					"/images/admin.jpg"));
+			}
+		};
+	}
+
+	public PreRunner(PasswordEncoder passwordEncoder, StorageService storageService) {
 		super();
 		this.passwordEncoder = passwordEncoder;
-		this.storageService=storageService;
+		this.storageService = storageService;
 	}
 }

@@ -1,8 +1,7 @@
 package com.rest.service.security;
+
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -35,20 +35,19 @@ import com.rest.service.UserService;
 
 @Configuration
 @EnableWebSecurity
-public class WebSecurityConfig  extends WebMvcConfigurationSupport    {
-	
+public class WebSecurityConfig extends WebMvcConfigurationSupport {
+
 	@Autowired
 	private UserService userDetailsService;
-	
+
 	@Autowired
 	PasswordEncoder passwordEncoder;
-	
 
-	public WebSecurityConfig(UserService userDetailsService,PasswordEncoder passwordEncoder) {
+	public WebSecurityConfig(UserService userDetailsService, PasswordEncoder passwordEncoder) {
 		this.userDetailsService = userDetailsService;
 		this.passwordEncoder = passwordEncoder;
 	}
-	
+
 	@Value("${jwt.public.key}")
 	RSAPublicKey key;
 
@@ -73,21 +72,17 @@ public class WebSecurityConfig  extends WebMvcConfigurationSupport    {
 				.authorizeHttpRequests((authorize) -> authorize
 						.antMatchers("/images/**","/h2-console/**/**").permitAll()
 						.antMatchers(HttpMethod.GET,"/users").permitAll()
+						.antMatchers(HttpMethod.POST,"/register").permitAll()
 						.anyRequest().authenticated()
 				)
-				.csrf((csrf) -> csrf.ignoringAntMatchers("/token"))
+				.csrf((csrf) -> csrf.ignoringAntMatchers("/token","/register"))
 				.httpBasic(Customizer.withDefaults())
 				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 				.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling((exceptions) -> exceptions
-						.authenticationEntryPoint((request, response, ex) -> {
-		                    response.sendError(
-		                            HttpServletResponse.SC_UNAUTHORIZED,
-		                            "{unauthorised}"
-		                        );
-		                    })  //new BearerTokenAuthenticationEntryPoint()
+						.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())  //
 						.accessDeniedHandler(new BearerTokenAccessDeniedHandler())
-				);
+				); 
 		// @formatter:on
 		return http.build();
 	}
@@ -112,32 +107,26 @@ public class WebSecurityConfig  extends WebMvcConfigurationSupport    {
 
 	@Override
 	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
-		
-		 registry.addResourceHandler("/**")
-         .addResourceLocations("classpath:/static/");
-		
+
+		registry.addResourceHandler("/**").addResourceLocations("classpath:/static/");
+
 	}
 
 	@Bean
-	JwtEncoder jwtEncoder() { 
-		
+	JwtEncoder jwtEncoder() {
+
 		JWK jwk = new RSAKey.Builder(this.key).privateKey(this.priv).build();
 		JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
-		
+
 		return new NimbusJwtEncoder(jwks);
 	}
-	
-
 
 	@Bean
-    public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        return authProvider;
-    }
-	
-	
-	
+	public DaoAuthenticationProvider authProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder);
+		return authProvider;
+	}
 
 }

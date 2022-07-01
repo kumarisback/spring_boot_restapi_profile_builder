@@ -1,6 +1,5 @@
 package com.rest.service.storage;
 
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -12,14 +11,21 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.rest.service.UserService;
 
 @Service
 public class FileSystemStorageService implements StorageService {
 
 	private final Path rootLocation;
+	
+	@Autowired
+	UserService userService;
 
 	@Autowired
 	public FileSystemStorageService(StorageProperties properties) {
@@ -28,10 +34,10 @@ public class FileSystemStorageService implements StorageService {
 
 	@Override
 	public String store(MultipartFile file) {
-		
-			if (file.isEmpty()) {
-				throw new StorageException("Failed to store empty file.");
-			}
+
+		if (file.isEmpty()) {
+			throw new StorageException("Failed to store empty file.");
+		}
 //			Path destinationFile = this.rootLocation.resolve(
 //					Paths.get(file.getOriginalFilename()))
 //					.normalize().toAbsolutePath();
@@ -40,21 +46,32 @@ public class FileSystemStorageService implements StorageService {
 //				throw new StorageException(
 //						"Cannot store file outside current directory.");
 //			}
-			try  {
-				byte[] bytes;
+		try {
 			
-					bytes = file.getBytes();
-					String insPath = this.rootLocation + "/" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
-							+ file.getOriginalFilename();// Directory
-					Files.write(Paths.get(insPath), bytes);
-					return insPath;
-		}
-		catch (IOException e) {
+			
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			String username = authentication.getName();
+			System.out.println(username);
+			String path=userService.findByUsername(username).getFilepath();
+			System.out.println(path);
+			if(path!=null) {
+				System.out.println(path+"====");
+				Files.delete(Paths.get( this.rootLocation+"/"+path.substring(6)));
+				System.out.println((Paths.get( this.rootLocation+path)));
+			}
+			byte[] bytes;
+
+			bytes = file.getBytes();
+			String insPath = this.rootLocation + "/" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
+					+ file.getOriginalFilename();// Directory
+			
+			
+			Files.write(Paths.get(insPath), bytes);
+			return insPath.substring(26);
+		} catch (IOException e) {
 			throw new StorageException("Failed to store file.", e);
 		}
 	}
-
-	
 
 	@Override
 	public Path load(String filename) {
@@ -68,14 +85,11 @@ public class FileSystemStorageService implements StorageService {
 			Resource resource = new UrlResource(file.toUri());
 			if (resource.exists() || resource.isReadable()) {
 				return resource;
-			}
-			else {
-				throw new StorageFileNotFoundException(
-						"Could not read file: " + filename);
+			} else {
+				throw new StorageFileNotFoundException("Could not read file: " + filename);
 
 			}
-		}
-		catch (MalformedURLException e) {
+		} catch (MalformedURLException e) {
 			throw new StorageFileNotFoundException("Could not read file: " + filename, e);
 		}
 	}
@@ -89,8 +103,7 @@ public class FileSystemStorageService implements StorageService {
 	public void init() {
 		try {
 			Files.createDirectories(rootLocation);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw new StorageException("Could not initialize storage", e);
 		}
 	}

@@ -1,6 +1,7 @@
 package com.rest.service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import com.rest.service.entitys.UserData;
 import com.rest.service.storage.StorageService;
 
 @RestController
+//@CrossOrigin
 public class RegisterController {
 
 	@Autowired
@@ -40,7 +42,7 @@ public class RegisterController {
 			service.save(new UserData(name,email,bCryptPasswordEncoder.encode(password),phone)); 
 			return ResponseEntity.ok("Register Successfully");
 		} else {
-			return ResponseEntity.badRequest().body("Email already registerd try using another mail or login ");
+			return ResponseEntity.status(HttpStatus.CONFLICT).build();
 		}
 	}
 }

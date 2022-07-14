@@ -38,7 +38,7 @@ public class PreRunner {
 					new String[] { "C", "C++", "Java", "Spring", "Spring Boot", "ReactJs", "MongoDb", "NodeJs" },
 					new String[] { "Hotel Managment", "DevConnect", "Cart", "Playlist Maker" }, new String[] {
 							"https://github.com/kumarisback", "https://in.linkedin.com/in/arun-kumar-49a155120" },
-					"/images/admin.jpg"));
+					"images/admin.jpg","Hi i'm a software developer and currently working on Spring boot"));
 			}
 		};
 	}

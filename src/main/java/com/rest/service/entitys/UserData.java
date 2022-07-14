@@ -20,8 +20,9 @@ public class UserData {
 	private String mobileno;
 	private String[] skills;
 	private String[] projects;
-	private String[] links;
+	private String[] socialLinks;
 	private String filepath;
+	private String about;
 
 	public UserData() {
 	}
@@ -35,7 +36,7 @@ public class UserData {
 	}
 
 	public UserData(String name, String email, String password, String mobileno, String[] skills, String[] projects,
-			String[] links, String filepath) {
+			String[] socialLinks, String filepath,String about) {
 		super();
 		this.name = name;
 		this.email = email;
@@ -43,8 +44,17 @@ public class UserData {
 		this.mobileno = mobileno;
 		this.skills = skills;
 		this.projects = projects;
-		this.links = links;
+		this.socialLinks = socialLinks;
 		this.filepath = filepath;
+		this.about=about;
+	}
+
+	public String getAbout() {
+		return about;
+	}
+
+	public void setAbout(String about) {
+		this.about = about;
 	}
 
 	public String getMobileno() {
@@ -111,13 +121,7 @@ public class UserData {
 		this.projects = projects;
 	}
 
-	public String[] getLinks() {
-		return links;
-	}
-
-	public void setLinks(String[] links) {
-		this.links = links;
-	}
+	
 
 	@Override
 	public int hashCode() {
@@ -140,7 +144,15 @@ public class UserData {
 	public String toString() {
 		return "UserData [id=" + id + ", name=" + name + ", email=" + email + ", password=" + password + ", mobileno="
 				+ mobileno + ", skills=" + Arrays.toString(skills) + ", projects=" + Arrays.toString(projects)
-				+ ", links=" + Arrays.toString(links) + ", filepath=" + filepath + "]";
+				+ ", links=" + Arrays.toString(socialLinks) + ", filepath=" + filepath + "]";
+	}
+
+	public String[] getSocialLinks() {
+		return socialLinks;
+	}
+
+	public void setSocialLinks(String[] socialLinks) {
+		this.socialLinks = socialLinks;
 	}
 
 }

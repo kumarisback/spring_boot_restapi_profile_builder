@@ -32,13 +32,13 @@ public class PreRunner {
 		return args -> {
 			storageService.init();
 			
-			if(userService.findByUsername("arun@gmail.com")==null) { 
-			 repository.save(new UserData("Arun Kumar", "arun@gmail.com",
+			if(userService.findByUsername("kumarisbeck@gmail.com")==null) { 
+			 repository.save(new UserData("Arun Kumar", "kumarisbeck@gmail.com",
 					passwordEncoder.encode("hardtoguess"), "7009740089",
 					new String[] { "C", "C++", "Java", "Spring", "Spring Boot", "ReactJs", "MongoDb", "NodeJs" },
 					new String[] { "Hotel Managment", "DevConnect", "Cart", "Playlist Maker" }, new String[] {
 							"https://github.com/kumarisback", "https://in.linkedin.com/in/arun-kumar-49a155120" },
-					"/images/admin.jpg"));
+					"images/admin.jpg","Hi i'm a software developer and currently working on Spring boot"));
 			}
 		};
 	}

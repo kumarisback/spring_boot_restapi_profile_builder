@@ -20,21 +20,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.rest.service.UserService;
 import com.rest.service.entitys.UserData;
 import com.rest.service.storage.StorageService;
 
 @RestController
-
+//@CrossOrigin("*")
 class UserController {
 
 	@Autowired
@@ -67,7 +66,6 @@ class UserController {
 		}
 		List<EntityModel<UserData>> users = userData.stream()
 				.map(user -> EntityModel.of(user,
-						linkTo(methodOn(UserController.class).one(user.getId())).withSelfRel(),
 						linkTo(methodOn(UserController.class).all()).withRel("users")))
 				.collect(Collectors.toList());
 
@@ -100,31 +98,39 @@ class UserController {
 		StreamUtils.copy(inputStream, response.getOutputStream());
 	}
 
-	@GetMapping("/profile/{id}")
-	EntityModel<UserData> one(@PathVariable Long id) {
+	@GetMapping("/myprofile")
+	EntityModel<UserData> profile(Authentication authentication) {
 
+		authentication = SecurityContextHolder.getContext().getAuthentication();
+		String username = authentication.getName();
+		UserData userData = service.findByUsername(username);
+		userData.setPassword("Don't worry it's safe");
+		return EntityModel.of(userData);
+
+	}
+	
+	@GetMapping("/profile/{id}")
+	EntityModel<UserData> pro(@PathVariable("id") Long id,Authentication authentication) {
+		
 		UserData userData = service.findById(id);
 		userData.setPassword("Don't worry it's safe");
 
-		return EntityModel.of(userData, //
-				linkTo(methodOn(UserController.class).one(id)).withSelfRel(),
-				linkTo(methodOn(UserController.class).all()).withRel("users"));
+		return EntityModel.of(userData);
 
 	}
 
-	@DeleteMapping("/profile/{id}")
-	ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+	@DeleteMapping("/deleteprofile")
+	ResponseEntity<?> deleteEmployee(Authentication authentication) {
 
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		String username = authentication.getName();
-		Long tempId = service.findByUsername(username).getId();
-		if (id == tempId) {
-			service.deleteById(id);
+		UserData user = service.findByUsername(username);
+		if (null !=user) {
+			service.deleteById(user.getId());
 			return ResponseEntity.ok("Profile deleted Succussefully");
 		}
 
 		else
-			return ResponseEntity.badRequest().build();
+			return ResponseEntity.badRequest().body("User Doesn't exist");
 	}
 
 }

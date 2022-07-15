@@ -2,12 +2,18 @@ package com.rest.service.security;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,9 +25,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
-import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
@@ -31,10 +39,15 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.shaded.json.JSONObject;
 import com.rest.service.UserService;
+import com.rest.service.exception.AccessDeniedHandlerJwt;
+import com.rest.service.exception.AuthenticationEntryPointJwt;
+import com.rest.service.exception.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
+
 public class WebSecurityConfig extends WebMvcConfigurationSupport {
 
 	@Autowired
@@ -42,6 +55,12 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 
 	@Autowired
 	PasswordEncoder passwordEncoder;
+	
+	@Autowired
+	AuthenticationEntryPointJwt authExceptionEntryPoint;
+	
+	@Autowired
+	AccessDeniedHandlerJwt  accessDeniedHandlerJwt;
 
 	public WebSecurityConfig(UserService userDetailsService, PasswordEncoder passwordEncoder) {
 		this.userDetailsService = userDetailsService;
@@ -67,26 +86,47 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 //        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 //        http.authenticationManager(authenticationManager);
         http.cors();
-        http.headers().frameOptions().disable();
+           http.headers().frameOptions().disable();
 		http
-				.authorizeHttpRequests((authorize) -> authorize
-						.antMatchers("/images/**","/h2-console/**/**").permitAll()
-						.antMatchers(HttpMethod.GET,"/users").permitAll()
-						.antMatchers(HttpMethod.POST,"/register").permitAll()
-						.anyRequest().authenticated()
+				.authorizeHttpRequests((authorize) -> {
+					try {
+						authorize
+								.antMatchers("/images/**","/h2-console/**/**").permitAll()
+								.antMatchers(HttpMethod.GET,"/users").permitAll()
+								.antMatchers(HttpMethod.GET,"/profile/**").permitAll()
+								.antMatchers(HttpMethod.POST,"/register").permitAll()
+								.anyRequest().authenticated();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 				)
 				.csrf((csrf) -> csrf.ignoringAntMatchers("/token","/register"))
 				.httpBasic(Customizer.withDefaults())
 				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+				
 				.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling((exceptions) -> exceptions
-						.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())  //
-						.accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+						.authenticationEntryPoint(	
+								(request, response, e) -> {
+							JSONObject jsonObject = new JSONObject();
+							jsonObject.put("ID", "invalid");
+							jsonObject.put("username",null);
+							String json = String.format("{\"message\": \"%s\"}", jsonObject);
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							response.setContentType("application/json");
+							response.setCharacterEncoding("UTF-8");
+							response.getWriter().write(json);  }
+								)
+						.accessDeniedHandler(accessDeniedHandlerJwt)
 				); 
 		// @formatter:on
 		return http.build();
 	}
 
+              
+//}
 //	@Bean
 //	UserDetailsService users() {
 //		// @formatter:off
@@ -100,17 +140,33 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 //		// @formatter:on
 //	}
 
+
+		@Bean
+		public CorsConfigurationSource corsConfigurationSource() {
+		    final CorsConfiguration configuration = new CorsConfiguration();
+		    configuration.setAllowedOrigins(Arrays.asList("*"));
+		    configuration.setAllowedMethods(Arrays.asList("HEAD",
+		            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+		    
+//		    configuration.setAllowCredentials(true);  this is used when only specific domain you want in allowed origin
+		    configuration.setAllowedHeaders(Arrays.asList("*"));
+		    configuration.setExposedHeaders(Arrays.asList("Authorization"));
+		    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		    source.registerCorsConfiguration("/**", configuration);
+		    return (CorsConfigurationSource) source;
+		}
+	 
 	@Bean
 	JwtDecoder jwtDecoder() {
 		return NimbusJwtDecoder.withPublicKey(this.key).build();
 	}
 
-	@Override
-	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
-
-		registry.addResourceHandler("/**").addResourceLocations("classpath:/static/");
-
-	}
+//	@Override
+//	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+//
+//		registry.addResourceHandler("/**").addResourceLocations("classpath:/static/");
+//
+//	}
 
 	@Bean
 	JwtEncoder jwtEncoder() {
@@ -127,6 +183,13 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 		authProvider.setUserDetailsService(userDetailsService);
 		authProvider.setPasswordEncoder(passwordEncoder);
 		return authProvider;
+	}
+
+
+	@Bean
+	public AuthenticationEventPublisher authenticationEventPublisher
+	        (ApplicationEventPublisher applicationEventPublisher) {
+	    return new DefaultAuthenticationEventPublisher(applicationEventPublisher);
 	}
 
 }

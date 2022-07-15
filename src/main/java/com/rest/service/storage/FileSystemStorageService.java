@@ -51,20 +51,18 @@ public class FileSystemStorageService implements StorageService {
 			
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			String username = authentication.getName();
-			System.out.println(username);
+//			System.out.println(username);
 			String path=userService.findByUsername(username).getFilepath();
-			System.out.println(path);
+//			System.out.println(path);
 			if(path!=null) {
-				System.out.println(path+"====");
+				System.out.println(path+"===="+rootLocation+"/"+path.substring(6));
 				Files.delete(Paths.get( this.rootLocation+"/"+path.substring(6)));
 				System.out.println((Paths.get( this.rootLocation+path)));
 			}
 			byte[] bytes;
-
 			bytes = file.getBytes();
 			String insPath = this.rootLocation + "/" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
 					+ file.getOriginalFilename();// Directory
-			
 			
 			Files.write(Paths.get(insPath), bytes);
 			return insPath.substring(26);

@@ -3,10 +3,13 @@ package com.rest.service.entitys;
 import java.util.Arrays;
 import java.util.Objects;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -23,6 +26,18 @@ public class UserData {
 	private String[] socialLinks;
 	private String filepath;
 	private String about;
+	
+	@OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "file_id")
+	private FileData filedata;
+
+	public FileData getFiledata() {
+		return filedata;
+	}
+
+	public void setFiledata(FileData filedata) {
+		this.filedata = filedata;
+	}
 
 	public UserData() {
 	}
@@ -144,7 +159,8 @@ public class UserData {
 	public String toString() {
 		return "UserData [id=" + id + ", name=" + name + ", email=" + email + ", password=" + password + ", mobileno="
 				+ mobileno + ", skills=" + Arrays.toString(skills) + ", projects=" + Arrays.toString(projects)
-				+ ", links=" + Arrays.toString(socialLinks) + ", filepath=" + filepath + "]";
+				+ ", socialLinks=" + Arrays.toString(socialLinks) + ", filepath=" + filepath + ", about=" + about
+				+ ", filedata=" + filedata + "]";
 	}
 
 	public String[] getSocialLinks() {

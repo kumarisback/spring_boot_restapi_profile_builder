@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import com.rest.service.entitys.MyUserPrincipal;
 import com.rest.service.entitys.UserData;
-import com.rest.service.exception.UserNotFoundException;
 import com.rest.service.repositry.UserDataRepo;
 
 @Service

@@ -64,6 +64,7 @@ class UserController {
 		for(UserData x: userData) {
 			x.setPassword("it's safe don't worry just enjoy it");
 		}
+	
 		List<EntityModel<UserData>> users = userData.stream()
 				.map(user -> EntityModel.of(user,
 						linkTo(methodOn(UserController.class).all()).withRel("users")))
@@ -71,6 +72,10 @@ class UserController {
 
 		return CollectionModel.of(users, linkTo(methodOn(UserController.class).all()).withSelfRel());
 	}
+
+	
+	
+	
 
 	
 

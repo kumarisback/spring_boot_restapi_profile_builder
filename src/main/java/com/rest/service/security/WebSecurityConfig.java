@@ -25,12 +25,10 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 import com.nimbusds.jose.jwk.JWK;
@@ -43,7 +41,6 @@ import com.nimbusds.jose.shaded.json.JSONObject;
 import com.rest.service.UserService;
 import com.rest.service.exception.AccessDeniedHandlerJwt;
 import com.rest.service.exception.AuthenticationEntryPointJwt;
-import com.rest.service.exception.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -97,7 +94,6 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 								.antMatchers(HttpMethod.POST,"/register").permitAll()
 								.anyRequest().authenticated();
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}

@@ -60,7 +60,7 @@ public class PutController {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-//				user.setFilepath(storageService.store(file));
+				user.setFilepath(storageService.store(file));
 			}
 			if(filedb!=null) {
 				user.setFiledata(filedb);

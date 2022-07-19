@@ -94,7 +94,6 @@ public class WebSecurityConfig extends WebMvcConfigurationSupport {
 								.antMatchers(HttpMethod.POST,"/register").permitAll()
 								.anyRequest().authenticated();
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}

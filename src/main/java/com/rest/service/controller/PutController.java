@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,7 +82,6 @@ public class PutController {
 	}
 	
 	
-//	@PutMapping("/creates/{id}")
 //	ResponseEntity<?> CreateProfiles(@PathVariable Long id,@RequestBody Map<String, String> input) {
 //		System.out.println("hi");
 //		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -108,6 +108,22 @@ public class PutController {
 //			System.out.println(file.isEmpty());
 //			if(!file.isEmpty()) {
 //				user.setFilepath(storageService.store(file));
+//			}
+//			System.out.println("===");
+//			user.setMobileno(phone);
+//			user.setLinks(links);
+//			user.setProjects(projects);
+//			user.setSkills(skills);
+//			service.save(user);
+//			return ResponseEntity.ok("Profile Updated Successfully");
+//
+//		}
+//
+//		else {
+//			return ResponseEntity.badRequest().build();
+//		}
+//	}
+	
 //			}
 //			System.out.println("===");
 //			user.setMobileno(phone);

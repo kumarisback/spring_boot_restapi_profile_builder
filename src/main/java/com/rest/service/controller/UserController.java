@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,23 +76,6 @@ class UserController {
 	
 	
 	
-	
-//	
-//	@GetMapping("/users")
-//	ResponseEntity<JSONObject> all() {
-//		List<UserData> userData=service.findAll();
-//		JSONObject jsonObject=new JSONObject();
-//		for(UserData x: userData) {
-//			x.setPassword("it's safe don't worry just enjoy it");
-//			jsonObject.put(x.getId()+"", x);
-//		}
-//		
-////		for(int i=0;i<userData.size();i++) {
-////			jsonObject.put(i+"",userData.get(i));
-////		}
-//
-//		return  ResponseEntity.ok(jsonObject);
-//	}
 
 	
 
